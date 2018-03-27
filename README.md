@@ -15,7 +15,7 @@ Construir el contenedor
   docker run --rm -it -v $(pwd):/ansible/playbooks \
   -v ~/.ssh/id_rsa:/root/.ssh/id_rsa \
   -v ~/.ssh/id_rsa.pub:/root/.ssh/id_rsa.pub \
-  proteus/ansible files/test.yml
+  proteus/ansible files/testPing.yaml
 
 ```
 ## Lanzar playbooks
