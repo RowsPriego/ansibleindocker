@@ -1,0 +1,5 @@
+[treelogic]
+master ansible_host=192.168.4.245
+slave01 ansible_host=192.168.4.246
+slave02 ansible_host=192.168.4.247
+slave03 ansible_host=192.168.4.248
