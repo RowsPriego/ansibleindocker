@@ -1,0 +1,29 @@
+---
+- hosts: treelogic
+  remote_user: root
+  tasks:
+    - name: guardar copia de seguridad de proteus-engine en /datos/proteus/bkpdeploys
+      shell: "mv proteus-engine /datos/proteus/bkdeploys/proteus-engine.PATRONFECHA_AA.MM.DD_tagExplicativo"
+      args:
+        chdir: /home/proteususer/
+
+    - name: git clone de proteus-engine
+      shell: "git clone https://github.com/proteus-h2020/proteus-engine -b proteus-dev"
+      args:
+        chdir: /home/proteususer/
+
+    - name: compilar engine
+      shell: "mvn clean install -DskipTests -Dcheckstyle.skip=true"
+      args:
+        chdir: /home/proteususer/proteus-engine/
+
+    - name: compilar flink-dist
+      shell: "mvn clean install -DskipTests -Dcheckstyle.skip=true"
+      args:
+        chdir: /home/proteususer/proteus-engine/flink-dist
+
+    - name: copiar archivos de configuracion
+      shell: "cp slaves masters flink-conf.yaml /home/proteususer/proteus-engine/build-target/conf"
+      args:
+        chdir: /datos/proteus/
+      # slaves, masters, flink-conf.yalm
