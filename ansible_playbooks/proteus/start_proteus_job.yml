@@ -1,0 +1,25 @@
+##### RESTART PROTEUS-JOB #####
+---
+- hosts: treelogic:&master
+  remote_user: root
+  tasks:
+    - name: start proteus job
+      shell: "nohup ./proteus-engine/flink-dist/target/flink-1.4-SNAPSHOT-bin/flink-1.4-SNAPSHOT/bin/flink run -m master:6123 \
+              -p 3 ./proteus-job/target/proteus-job_2.11-0.1-SNAPSHOT.jar \
+              --bootstrap-server clusterIDI.slave02.treelogic.local:6667 \
+              --flink-checkpoints-dir hdfs://master:8020/proteus/flink-checkpoints \
+              --state-backend rocksdb \
+              --state-backend-mbsize 250 \
+              --flink-checkpoints-interval 10 \
+              --sax-model-storage-path /home/proteususer/proteus-dictionaries/dictionaries/ \
+              --sax-variable C0002 \
+              --lasso-variable C0028 \
+              --lasso-workers 4 \
+              --lasso-ps 1 \
+              --lasso-pull-limit 10 \
+              --lasso-features 76 \
+              --lasso-range-partitioning true \
+              --lasso-allowed-lateness 10 \
+              --lasso-iteration-wait-time 20000 &"
+      args:
+        chdir: /home/proteususer

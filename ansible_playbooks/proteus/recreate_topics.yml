@@ -1,0 +1,49 @@
+###### RECREATE TOPICS -> master or slaves ######
+---
+- hosts: treelogic:&master
+  remote_user: root
+  tasks:
+    - name: check topics
+      shell: "/usr/hdp/2.5.3.0-37/kafka/bin/kafka-topics.sh --zookeeper localhost:2181 --list"
+      register: kafka_topic_list
+
+    - name: list topics before deletion
+      debug:
+        var: item
+      with_items: kafka_topic_list.stdout_lines
+
+    - name: obtener lista de topics
+      command: cat /home/proteususer/proteus_topics.txt
+      register: proteus_topics
+
+    - name: listar el fichero de topics
+      debug:
+        var: "{{ item }}"
+      with_items: proteus_topics.stdout_lines
+
+    - name: delete topics
+      shell: "/usr/hdp/2.5.3.0-37/kafka/bin/kafka-topics.sh --zookeeper localhost:2181 --delete --topic {{item}}"
+      with_items: "{{ proteus_topics.stdout_lines }}"
+      ignore_errors: yes
+
+    - name: check topics
+      shell: "/usr/hdp/2.5.3.0-37/kafka/bin/kafka-topics.sh --zookeeper localhost:2181 --list"
+      register: kafka_topic_list
+
+    - name: list topics before create and after delete
+      debug:
+        var: item
+      with_items: kafka_topic_list.stdout_lines
+
+    - name: create Kafka topics
+      shell: "/usr/hdp/2.5.3.0-37/kafka/bin/kafka-topics.sh --zookeeper localhost:2181 --create --replication-factor 2 --partitions 5 --topic {{item}}"
+      with_items: "{{ proteus_topics.stdout_lines }}"
+
+    - name: check topics
+      shell: "/usr/hdp/2.5.3.0-37/kafka/bin/kafka-topics.sh --zookeeper localhost:2181 --list"
+      register: kafka_topic_list
+
+    - name: list topics after create
+      debug:
+        var: "{{ item }}"
+      with_items: kafka_topic_list.stdout_lines

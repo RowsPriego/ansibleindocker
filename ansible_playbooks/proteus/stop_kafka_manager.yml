@@ -1,0 +1,27 @@
+###### STOP KAFKA_MANAGER -> slave01 ######
+---
+- hosts: treelogic:&slave01
+  remote_user: root
+  tasks:
+    - name: obtain the running pid of kafka manager
+      shell: "cat RUNNING_PID"
+      args:
+        chdir: /home/proteususer/kafka-manager-1.3.3.7
+      register: kafka_manager_pid
+      ignore_errors: yes
+
+    - debug:
+        var: kafka_manager_pid.stdout_lines
+
+    - name: kill kafka manager process
+      shell: "kill -9 {{ item }}"
+      with_items: "{{kafka_manager_pid.stdout_lines}}"
+
+    - name: buscar el fichero RUNNING_PID
+      stat: path=/home/proteususer/kafka-manager-1.3.3.7/RUNNING_PID
+      register: running_pid_file
+
+    - name: delete RUNNING_PID file
+      file:
+        path: "{{ running_pid_file }}"
+        state: absent

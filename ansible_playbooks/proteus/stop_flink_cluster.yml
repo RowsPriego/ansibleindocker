@@ -1,0 +1,15 @@
+##### STOP FLINK MASTER #####
+---
+- hosts: treelogic:&master
+  remote_user: root
+  tasks:
+    - name: comprobar que esta levantado
+      shell: "jps | grep JobManager | awk '{print $1}'"
+      register: flink_cluster_pid
+
+    - name: start cluster
+      shell: "/home/proteususer/proteus-engine/build-target/bin/stop-cluster.sh"
+      when: flink_cluster_pid.stdout_lines|length > 0
+
+    #- name: comprobar que no sigue levantado
+    #- name: comprobar que no siguen levantados los task managers

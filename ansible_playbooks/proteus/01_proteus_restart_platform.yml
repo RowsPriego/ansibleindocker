@@ -1,0 +1,15 @@
+---
+  - hosts: treelogic
+    tasks:
+      - debug:
+          msg: "Restart all platform (cluster, job. kakfa, etc)"
+
+#  - include: ./stop_flink_cluster.yml
+#  - include: ./stop_proteus_job.yml
+#  - include: ./stop_producer.yml
+#  - include: ./stop_kafka_manager.yml
+#  - include: ./recreate_topics.yml
+#  - include: ./start_kafka_manager.yml
+#  - include: ./start_flink_cluster.yml
+  - include: ./start_kafka_producer.yml
+  - include: ./start_proteus_job.yml

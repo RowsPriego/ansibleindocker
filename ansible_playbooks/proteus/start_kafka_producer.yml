@@ -1,0 +1,19 @@
+#### RESTART PROTEUS_PRODUCER #####
+---
+- hosts: treelogic:&slave02
+  remote_user: root
+  tasks:
+    - name: check if exists a proteus_producer running
+      shell: "jps | grep Launcher | awk '{print $1}'"
+      register: proteus_producer
+
+    - name: start the proteus_producer
+      shell: "nohup mvn exec:java > /datos/proteus/proteus-producer-logs/producer-log.out &"
+      args:
+        chdir: /home/proteususer/proteus-producer
+      when: proteus_producer.stdout_lines|length = 0
+
+    - name: log for running proteus-producer
+      debug:
+        msg: "Proteus-producer is running!"
+      when: proteus_producer.stdout_lines|length > 0
