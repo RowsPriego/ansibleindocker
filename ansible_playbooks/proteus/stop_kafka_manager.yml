@@ -3,7 +3,7 @@
 - hosts: treelogic:&slave01
   remote_user: root
   tasks:
-    - name: obtain the running pid of kafka manager
+    - name: obtain the running pid of kafka manager in directory
       shell: "cat RUNNING_PID"
       args:
         chdir: /home/proteususer/kafka-manager-1.3.3.7
@@ -16,6 +16,7 @@
     - name: kill kafka manager process
       shell: "kill -9 {{ item }}"
       with_items: "{{kafka_manager_pid.stdout_lines}}"
+      ignore_errors: yes
 
     - name: buscar el fichero RUNNING_PID
       stat: path=/home/proteususer/kafka-manager-1.3.3.7/RUNNING_PID
@@ -23,5 +24,6 @@
 
     - name: delete RUNNING_PID file
       file:
-        path: "{{ running_pid_file }}"
+        path: "{{ running_pid_file.stat.path }}"
         state: absent
+      when: running_pid_file.stat.exists

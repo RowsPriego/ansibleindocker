@@ -14,7 +14,7 @@
     - name: get proteus-job id
       set_fact:
         job_id: "{{ job_list.json['jobs-running'][0] }}"
-      when: job_list.failed == False
+      when: job_list.failed == False and  job_list.json['jobs-running']|length > 0
 
     - name: stop proteus-job
       shell: "./flink cancel {{ job_id }}"

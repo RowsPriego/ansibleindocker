@@ -8,8 +8,9 @@
         path:  /home/proteususer/kafka-manager-1.3.3.7/RUNNING_PID
       register: kafka_manager_running_pid
 
-    - debug:
-      var: kafka_manager_running_pid
+    - name: debug
+      debug:
+        var: kafka_manager_running_pid
 
     - name: start the kafka-manager
       shell: "nohup ./bin/kafka-manager -Dhttp.port=8099 > /datos/proteus/kafka-manager.logs &"
