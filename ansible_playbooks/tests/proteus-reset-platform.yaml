@@ -1,0 +1,166 @@
+---
+  ###### STOP PROTEUS-JOB ######
+- hosts: treelogic:&master
+  remote_user: root
+  tasks:
+    - name: get flink running jobs
+      uri:
+        url: http://clusteridi.master.treelogic.local:8081/jobs
+        method: GET
+        return_content: yes
+      register: job_list
+      ignore_errors: yes
+
+    - name: get proteus-job id
+      set_fact:
+        job_id: "{{ job_list.json['jobs-running'][0] }}"
+      when: job_list.failed == False
+
+    - name: stop proteus-job
+      shell: "./flink cancel {{ job_id }}"
+      args:
+        chdir: /home/proteususer/proteus-engine/build-target/bin/
+      when: job_id is defined
+
+    - name: debug
+      debug:
+        msg: " Cant stop the proteus_job: {{ job_list.msg }}"
+      when: job_list.failed
+
+  ###### STOP PROTEUS_PRODUCER -> slave02 ######
+- hosts: treelogic:&slave02
+  remote_user: root
+  tasks:
+    - name: get running proteus_producer task
+      shell: "jps | grep Launcher | awk '{print $1}'"
+      register: proteus_producer
+
+    - name: setting producer_pid
+      set_fact:
+        proteus_producer_pid: "{{ proteus_producer.stdout_lines[0] }}"
+      when: proteus_producer.stdout_lines|length > 0
+
+    - name: kill proteus_producer
+      shell: "kill -9 {{ proteus_producer_pid }}"
+      when: proteus_producer.stdout_lines|length > 0
+
+  ###### STOP KAFKA_MANAGER -> slave01 ######
+- hosts: treelogic:&slave01
+  remote_user: root
+  tasks:
+    - name: check if is running
+      stat:
+        path:  /home/proteususer/kafka-manager-1.3.3.7/RUNNING_PID
+      register: kafka_manager_running_pid
+
+    - debug:
+      var: kafka_manager_running_pid
+
+    - name: start the kafka-manager
+      shell: "nohup ./bin/kafka-manager -Dhttp.port=8099 > /datos/proteus/kafka-manager.logs &"
+      args:
+        chdir: /home/proteususer/kafka-manager-1.3.3.7
+      when: kafka_manager_running_pid.stat.exists == False
+
+  ###### RECREATE TOPICS -> master or slaves ######
+- hosts: treelogic:&master
+  remote_user: root
+  tasks:
+    - name: check topics
+      shell: "/usr/hdp/2.5.3.0-37/kafka/bin/kafka-topics.sh --zookeeper localhost:2181 --list"
+      register: kafka_topic_list
+
+    - name: list topics before deletion
+      debug:
+        var: item
+      with_items: kafka_topic_list.stdout_lines
+
+    - name: obtener lista de topics
+      command: cat /home/proteususer/proteus_topics.txt
+      register: proteus_topics
+
+    - name: listar el fichero de topics
+      debug:
+        var: "{{ item }}"
+      with_items: proteus_topics.stdout_lines
+
+    - name: delete topics
+      shell: "/usr/hdp/2.5.3.0-37/kafka/bin/kafka-topics.sh --zookeeper localhost:2181 --delete --topic {{item}}"
+      with_items: "{{ proteus_topics.stdout_lines }}"
+      ignore_errors: yes
+
+    - name: check topics
+      shell: "/usr/hdp/2.5.3.0-37/kafka/bin/kafka-topics.sh --zookeeper localhost:2181 --list"
+      register: kafka_topic_list
+
+    - name: list topics before create and after delete
+      debug:
+        var: item
+      with_items: kafka_topic_list.stdout_lines
+
+    - name: create Kafka topics
+      shell: "/usr/hdp/2.5.3.0-37/kafka/bin/kafka-topics.sh --zookeeper localhost:2181 --create --replication-factor 2 --partitions 5 --topic {{item}}"
+      with_items: "{{ proteus_topics.stdout_lines }}"
+
+    - name: check topics
+      shell: "/usr/hdp/2.5.3.0-37/kafka/bin/kafka-topics.sh --zookeeper localhost:2181 --list"
+      register: kafka_topic_list
+
+    - name: list topics after create
+      debug:
+        var: "{{ item }}"
+      with_items: kafka_topic_list.stdout_lines
+
+  ##### RESTART KAFKA_MANAGER #####
+- hosts: treelogic:&slave01
+  remote_user: root
+  tasks:
+    - name: start the kafka-manager
+      shell: "nohup ./bin/kafka-manager -Dhttp.port=8099 > /datos/proteus/kafka-manager.logs &"
+      args:
+        chdir: /home/proteususer/kafka-manager-1.3.3.7
+
+  ##### RESTART PROTEUS_PRODUCER #####
+- hosts: treelogic:&slave02
+  remote_user: root
+  tasks:
+    - name: check if exists a proteus_producer running
+      shell: "jps | grep Launcher | awk '{print $1}'"
+      register: proteus_producer
+
+    - name: start the proteus_producer
+      shell: "nohup mvn exec:java > /datos/proteus/proteus-producer-logs/producer-log.out &"
+      args:
+        chdir: /home/proteususer/proteus-producer
+      when: proteus_producer.stdout_lines|length = 0
+
+    - name: log for running proteus-producer
+      debug:
+        msg: "Proteus-producer is running!"
+      when: proteus_producer.stdout_lines|length > 0
+
+
+  ###### RESTART PROTEUS-JOB #####
+- hosts: treelogic:&master
+  remote_user: root
+  tasks:
+    - name: start proteus job
+      shell: "nohup ./proteus-engine/flink-dist/target/flink-1.4-SNAPSHOT-bin/flink-1.4-SNAPSHOT/bin/flink run -m master:6123 \
+              -p 3 ./proteus-job/target/proteus-job_2.11-0.1-SNAPSHOT.jar \
+              --bootstrap-server clusterIDI.slave02.treelogic.local:6667 \
+              --flink-checkpoints-dir hdfs://master:8020/proteus/flink-checkpoints \
+              --state-backend rocksdb \
+              --state-backend-mbsize 250 \
+              --flink-checkpoints-interval 10 \
+              --sax-model-storage-path /home/proteususer/proteus-dictionaries/dictionaries/ \
+              --sax-variable C0002 \
+              --lasso-variable C0028 \
+              --lasso-workers 4 \
+              --lasso-ps 1 \
+              --lasso-pull-limit 10 \
+              --lasso-features 76 \
+              --lasso-range-partitioning true \
+              --lasso-allowed-lateness 10 \
+              --lasso-iteration-wait-time 20000 &"
+      args:
+        chdir: /home/proteususer

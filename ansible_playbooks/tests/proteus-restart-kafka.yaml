@@ -6,39 +6,33 @@
     - name: get running proteus_producer task
       shell: "jps | grep Launcher | awk '{print $1}'"
       register: proteus_producer
-    - debug:
-        var: proteus_producer.stdout_lines
+
+    - name: setting producer_pid
+      set_fact:
+        proteus_producer_pid: "{{ proteus_producer.stdout_lines[0] }}"
+      when: proteus_producer.stdout_lines|length > 0
 
     - name: kill proteus_producer
-      shell: "kill -9 {{ item }}"
-      with_items: "{{proteus_producer.stdout_lines}}"
+      shell: "kill -9 {{ proteus_producer_pid }}"
+      when: proteus_producer.stdout_lines|length > 0
 
   ###### STOP KAFKA_MANAGER -> slave01 ######
 - hosts: treelogic:&slave01
   remote_user: root
   tasks:
-    - name: obtain the running pid of kafka manager
-      shell: "cat RUNNING_PID"
-      args:
-        chdir: /home/proteususer/kafka-manager-1.3.3.7
-      register: kafka_manager_pid
-      ignore_errors: yes
+    - name: check if is running
+      stat:
+        path:  /home/proteususer/kafka-manager-1.3.3.7/RUNNING_PID
+      register: kafka_manager_running_pid
 
     - debug:
-        var: kafka_manager_pid.stdout_lines
+      var: kafka_manager_running_pid
 
-    - name: kill kafka manager process
-      shell: "kill -9 {{ item }}"
-      with_items: "{{kafka_manager_pid.stdout_lines}}"
-
-    - name: buscar el fichero RUNNING_PID
-      stat: path=/home/proteususer/kafka-manager-1.3.3.7/RUNNING_PID
-      register: running_pid_file
-
-    - name: delete RUNNING_PID file
-      file:
-        path: "{{ running_pid_file }}"
-        state: absent
+    - name: start the kafka-manager
+      shell: "nohup ./bin/kafka-manager -Dhttp.port=8099 > /datos/proteus/kafka-manager.logs &"
+      args:
+        chdir: /home/proteususer/kafka-manager-1.3.3.7
+      when: kafka_manager_running_pid.stat.exists == False
 
   ###### RECREATE TOPICS -> master or slaves ######
 - hosts: treelogic:&master

@@ -1,0 +1,12 @@
+---
+- hosts: treelogic:&slave01
+  remote_user: root
+  tasks:
+    - name: check if is running
+      stat:
+        path:  /home/proteususer/kafka-manager-1.3.3.7/RUNNING_PID
+      register: kafka_manager_pid
+
+    - name: debudg
+      debug:
+        msg: " {{ kafka_manager_pid }}"

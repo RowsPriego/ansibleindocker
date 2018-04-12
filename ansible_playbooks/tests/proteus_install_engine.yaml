@@ -3,7 +3,7 @@
   remote_user: root
   tasks:
     - name: guardar copia de seguridad de proteus-engine en /datos/proteus/bkpdeploys
-      shell: "mv proteus-engine /datos/proteus/bkdeploys/proteus-engine.PATRONFECHA_AA.MM.DD_tagExplicativo"
+      shell: "mv proteus-engine /datos/proteus/bkdeploys/proteus-engine.bak.{{ansible_date_time.date}}"
       args:
         chdir: /home/proteususer/
 
@@ -25,5 +25,5 @@
     - name: copiar archivos de configuracion
       shell: "cp slaves masters flink-conf.yaml /home/proteususer/proteus-engine/build-target/conf"
       args:
-        chdir: /datos/proteus/
+        chdir: /datos/proteus/flink-conf
       # slaves, masters, flink-conf.yalm
