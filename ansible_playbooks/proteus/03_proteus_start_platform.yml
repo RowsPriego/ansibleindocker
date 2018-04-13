@@ -1,0 +1,10 @@
+---
+  - hosts: treelogic
+    tasks:
+      - debug:
+          msg: "Start all platform (cluster, job. kakfa, etc)"
+
+  - include: ./start_kafka_manager.yml
+  - include: ./start_flink_cluster.yml
+  - include: ./start_kafka_producer.yml
+  - include: ./start_proteus_job.yml
