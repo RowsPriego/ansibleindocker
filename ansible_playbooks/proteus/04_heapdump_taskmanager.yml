@@ -1,0 +1,28 @@
+# Tomar heap-dump de los tres TMs
+---
+  - hosts: treelogic[1-3]
+    tasks:
+      - debug:
+          msg: "Get a heap-dump from all flink task manager"
+
+      - name: get the TM pid
+        shell: "jps | grep TaskManager | awk '{print $1}'"
+        register: tm_pid
+
+      - name: setting tm_pid
+        set_fact:
+          taskmanager_pid: "{{ tm_pid.stdout_lines[0] }}"
+        when: tm_pid.stdout_lines|length > 0
+
+      - name: obtener dump anterior
+        stat: path=/datos/proteus/heapdump/hd.bin
+        register: last_dump
+
+      - name: borrar dump anterior
+        file:
+          path: "{{ last_dump.stat.path }}"
+          state: absent
+        when: last_dump.stat.exists
+
+      - name: take the heap_dump
+        shell: "jcmd {{ taskmanager_pid }} GC.heap_dump /datos/proteus/heapdump/hd.bin"

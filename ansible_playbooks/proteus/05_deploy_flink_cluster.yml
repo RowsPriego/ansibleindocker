@@ -1,0 +1,8 @@
+---
+  - hosts: treelogic
+    tasks:
+      - debug:
+          msg: "Deploy flink cluster"
+
+  - include: ./compile_flink_cluster.yml
+  - include: ./start_flink_cluster.yml
