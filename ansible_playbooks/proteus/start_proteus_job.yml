@@ -19,7 +19,8 @@
               --lasso-pull-limit 10 \
               --lasso-features 76 \
               --lasso-range-partitioning true \
-              --lasso-allowed-lateness 10 \
+              --lasso-flatness-allowed-lateness 5 \
+              --lasso-realtime-allowed-lateness 5 \
               --lasso-iteration-wait-time 20000 &"
       args:
         chdir: /home/proteususer

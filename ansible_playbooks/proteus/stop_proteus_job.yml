@@ -1,4 +1,4 @@
-  ###### STOP PROTEUS-JOB ######
+###### STOP PROTEUS-JOB ######
 ---
 - hosts: treelogic:&master
   remote_user: root

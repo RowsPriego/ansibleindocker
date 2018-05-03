@@ -1,0 +1,24 @@
+##### COMPILE SOLMA #####
+---
+- hosts: treelogic:&master
+  remote_user: root
+  tasks:
+    - name: Info
+      debug:
+        msg: "Antes de compilar, se debe haber clonado la versión de proteus-solma que se quiera ejecutar en la carpeta /home/proteususer "
+
+    - name: test proteus-solma dir exists
+      stat:
+        path: /home/proteususer/proteus-solma
+      register: solma_dir
+
+    - name: maven clean install proteus-solma
+      shell: "mvn clean install -DskipTests -Dcheckstyle.skip=true"
+      args:
+        chdir: /home/proteususer/proteus-solma
+      register: solma_install
+      when: solma_dir.stat.exists and solma_dir.stat.isdir
+
+    - name: check proteus-solma compile
+      debug:
+        var: solma_install.stdout

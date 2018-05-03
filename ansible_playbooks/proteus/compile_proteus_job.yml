@@ -1,3 +1,17 @@
-# mvn clean install -DskipTests -Dcheckstyle.skip=true
+---
+- hosts: treelogic:&master
+  remote_user: root
+  tasks:
+  - name: Info
+    debug:
+      msg: "Antes de compilar, se debe haber clonado la versión de proteus-job que se quiera ejecutar en la carpeta /home/proteususer "
 
-# mvn clean package -DskipTests -Dcheckstyle.skip=true
+  - name: maven clean install proteus-job
+    shell: "mvn clean package -DskipTests -Dcheckstyle.skip=true"
+    args:
+      chdir: /home/proteususer/proteus-job
+    register: job_install
+
+  - name: check proteus-job compile
+    debug:
+      var: job_install.stdout

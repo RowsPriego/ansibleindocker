@@ -1,6 +1,6 @@
 ###### RECREATE TOPICS -> master or slaves ######
 ---
-- hosts: treelogic:&master
+- hosts: treelogic:&slave01
   remote_user: root
   tasks:
     - name: check topics
