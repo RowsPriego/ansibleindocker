@@ -1,7 +1,7 @@
 # https://github.com/philm/ansible_playbook/blob/10d053b4e78ba9e39c21f0634322ba84b2f31e64/Dockerfile
 FROM gliderlabs/alpine:3.3
 
-ARG ANSIBLE_VERSION=v2.4.3.0-1
+ARG ANSIBLE_VERSION=2.4.3.0
 
 RUN \
   apk-install \
@@ -24,12 +24,12 @@ RUN mkdir /etc/ansible/ /ansible
 RUN echo "[local]" >> /etc/ansible/hosts && \
     echo "localhost" >> /etc/ansible/hosts
 
-COPY files/proteus_hosts.txt /etc/ansible/proteus_hosts
+COPY files/myhosts.txt /etc/ansible/myhosts
 
-RUN cat /etc/ansible/proteus_hosts >> /etc/ansible/hosts
+RUN cat /etc/ansible/myhosts >> /etc/ansible/hosts
 
 RUN \
-  curl -fsSL https://github.com/ansible/ansible/archive/$ANSIBLE_VERSION.tar.gz -o ansible.tar.gz && \
+  wget https://releases.ansible.com/ansible/ansible-$ANSIBLE_VERSION.tar.gz -o ansible.tar.gz && \
   tar -xzf ansible.tar.gz -C ansible --strip-components 1 && \
   rm -fr ansible.tar.gz /ansible/docs /ansible/examples /ansible/packaging
 
